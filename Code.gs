@@ -4,7 +4,8 @@ function onOpen() {
     
   var filterSheetMenu = [];
   filterSheetMenu = [
-    {name: "Filter", functionName: "filter"},
+    {name: "Filter (show/hide)", functionName: "filter"},
+    {name: "Filter (do not show/hide)", functionName: "filterNSH"},
     {name: "Show All", functionName: "showAll"},
     {name: "Sort by Card",functionName: "sortByCard"},
     {name: "Sort by Client", functionName: "sortByClient"},
@@ -97,8 +98,96 @@ function filter() {
         cell.setValue("X");
       }
     }
+  //sortBySelected();
   goToTop();
 }
+
+
+
+
+
+
+
+
+function filterNSH() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName(targetSheet);
+  var data = sheet.getDataRange().getValues();
+
+  var clientColumn = theClientColumn;//0;
+  var cardColumn = theCardColumn;//2;
+  var selectedColumn = theSelectedColumn;//3; 
+  
+ 
+  // getting the filters in arrays
+  var col1 = [];
+  col1 = sheet.getRange('B1:1').getValues().join().split(',').filter(Boolean);
+  
+  var col2 = [];
+  col2 = sheet.getRange('B2:2').getValues().join().split(',').filter(Boolean);
+  
+  
+  // card numbers must be strings for "contains" method to work (!)
+  for (var i=0; i < col2.length; i++){
+    col2[i]=col2[i].toString();
+  }
+  
+  for(var i=3; i< data.length; i++){
+     data[i][cardColumn] = data[i][cardColumn].toString();
+  }
+    
+  // hide all rows and remove all selectors before running filtering section of code
+  for(var i=3; i< data.length; i++){
+    //sheet.hideRows(i+1);
+    var cell = sheet.getRange(i+1,selectedColumn+1);
+    cell.setValue("");
+  }
+  
+    // FILTERING SECTION OF CODE
+    //iterate over all rows
+    for(var i=3; i< data.length; i++){
+            
+      if  ((col1.length > 0)  &&  (col2.length == 0)) {
+        if ( col1.includes(data[i][clientColumn])) {
+          //sheet.showRows(i+1);
+          
+          var cell = sheet.getRange(i+1,selectedColumn+1);
+          cell.setValue("X");
+        }    
+      } 
+      
+      else if((col1.length == 0) && ( col2.length > 0)) {
+        if ( col2.includes(data[i][cardColumn])) {
+          //sheet.showRows(i+1);
+          
+          var cell = sheet.getRange(i+1,selectedColumn+1);
+          cell.setValue("X");
+        }
+      }
+      
+      else if(( col1.length > 0) && ( col2.length > 0)) {
+        if (( col1.includes(data[i][clientColumn]) ) && ( col2.includes(data[i][cardColumn]) )){
+          //sheet.showRows(i+1);
+          
+          var cell = sheet.getRange(i+1,selectedColumn+1);
+          cell.setValue("X");
+        }
+      }
+      
+      else if ((col1.length == 0) && ( col2.length == 0)) {
+        //sheet.showRows(i+1);
+        
+        var cell = sheet.getRange(i+1,selectedColumn+1);
+        cell.setValue("X");
+      }
+    }
+  sortBySelected();
+  goToTop();
+}
+
+
+
+
 
 
 function showAll() {
@@ -144,8 +233,13 @@ function sortByCard(){
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sheet = ss.getSheetByName(targetSheet);
   var data = sheet.getDataRange().getValues();
-  var range = sheet.getRange("A4:C500");
-  range.sort(theCardColumn+1);
+  
+  var rows = sheet.getDataRange();
+  var numRows = rows.getNumRows() + 10;
+  
+  var range = sheet.getRange("A4:C"+numRows);
+  Browser.msgBox('under development', 'the range is A4:C'+numRows, Browser.Buttons.OK);
+  //range.sort(theCardColumn+1);
 }
 
 function sortByClient(){
@@ -156,6 +250,13 @@ function sortByClient(){
   range.sort(theClientColumn+1);
 }
 
+function sortBySelected(){
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName(targetSheet);
+  var data = sheet.getDataRange().getValues();
+  var range = sheet.getRange("A4:C500");
+  range.sort(theSelectedColumn+1);
+}
 
 function moveFilteredLine(){
   var ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -169,10 +270,10 @@ function moveFilteredLine(){
   for (var i = 3; i < numberOffirstSheetRows; i++) { 
     if (data[i][selectedColumn] != ""){//checks if the row is marked/checked/approved
       Logger.log(data[i][selectedColumn])
-      secondSheet.appendRow([data[i][3],       // amount                                                    // change what is moved & the order
-                             data[i][1],       // fuel_type
-                             data[i][2],       // date
+      secondSheet.appendRow([data[i][2],       // date                                                    // change what is moved & the order
                              data[i][0],       // vendor
+                             data[i][1],       // fuel_type
+                             data[i][3],       // amount
                              data[i][5]        // client
                             ]);
       
