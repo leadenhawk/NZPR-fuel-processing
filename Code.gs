@@ -4,11 +4,13 @@ function onOpen() {
     
   var filterSheetMenu = [];
   filterSheetMenu = [
+    {name: "Populate Client Numbers", functionName: "populateClientNumbers" },
     {name: "Filter (show/hide)", functionName: "filter"},
     {name: "Filter (do not show/hide)", functionName: "filterNSH"},
-    {name: "Show All", functionName: "showAll"},
+    {name: "Show All/Unselect", functionName: "showAll"},
     {name: "Sort by Card",functionName: "sortByCard"},
     {name: "Sort by Client", functionName: "sortByClient"},
+    {name: "Sort by Client, then Date", functionName: "sortByClientThenDate" },
     {name: "Sort by Card, then Client", functionName: "sortByCardThenClient" },
     {name: "Move", functionName: "moveFilteredLine" },
     {name: "export as csv files", functionName: "saveAsCSV"}
@@ -22,9 +24,9 @@ function onOpen() {
 // variables for the filtering function
 var targetSheet =  "Sheet1";      //"testing";                                     // change the target sheet
 var csvSheet = "Proc";                                                             // change the destination sheet
-var theClientColumn = 5;//0;                                                           // change client column
-var theCardColumn = 4;//2;                                                             // change card column
-var theSelectedColumn = 8;//3;                                                         // change selected column
+var theClientColumn = 5;//0;                                                       // change client column
+var theCardColumn = 4;//2;                                                         // change card column
+var theSelectedColumn = 8;//3;                                                     // change selected column
 
 function filter() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -106,7 +108,8 @@ function filter() {
 
 
 
-
+var highlightStyle = {};
+highlightStyle[DocumentApp.Attribute.FOREGROUND_COLOR] = '#FF0000';
 
 
 function filterNSH() {
@@ -153,8 +156,12 @@ function filterNSH() {
           
           var cell = sheet.getRange(i+1,selectedColumn+1);
           cell.setValue("X");
+          
+          var changeRange = sheet.getRange(cell.getRow(),1,1,sheet.getLastColumn());
+          changeRange.setBackgroundRGB(137, 232, 148);
         }    
       } 
+      
       
       else if((col1.length == 0) && ( col2.length > 0)) {
         if ( col2.includes(data[i][cardColumn])) {
@@ -162,8 +169,12 @@ function filterNSH() {
           
           var cell = sheet.getRange(i+1,selectedColumn+1);
           cell.setValue("X");
+          
+          var changeRange = sheet.getRange(cell.getRow(),1,1,sheet.getLastColumn());
+          changeRange.setBackgroundRGB(137, 232, 148);
         }
       }
+      
       
       else if(( col1.length > 0) && ( col2.length > 0)) {
         if (( col1.includes(data[i][clientColumn]) ) && ( col2.includes(data[i][cardColumn]) )){
@@ -171,23 +182,28 @@ function filterNSH() {
           
           var cell = sheet.getRange(i+1,selectedColumn+1);
           cell.setValue("X");
-        }
+          
+          var changeRange = sheet.getRange(cell.getRow(),1,1,sheet.getLastColumn());
+          changeRange.setBackgroundRGB(137, 232, 148);
+         }
       }
+      
       
       else if ((col1.length == 0) && ( col2.length == 0)) {
         //sheet.showRows(i+1);
         
         var cell = sheet.getRange(i+1,selectedColumn+1);
         cell.setValue("X");
+        
+        var changeRange = sheet.getRange(cell.getRow(),1,1,sheet.getLastColumn());
+        changeRange.setBackgroundRGB(137, 232, 148);
       }
     }
-  sortBySelected();
+  sortBySelectedThenByClientThenByDate();
+  //sortBySelected();
+  //sortByClientThenDate();
   goToTop();
 }
-
-
-
-
 
 
 function showAll() {
@@ -202,6 +218,8 @@ function showAll() {
   for(var i=3; i< maxRows; i++){
     var cell = sheet.getRange(i+1,selectedColumn+1);
     cell.setValue("");
+    var changeRange = sheet.getRange(cell.getRow(),1,1,sheet.getLastColumn());
+    changeRange.setBackgroundRGB(255, 255, 255);
   }
   
   //show all the rows
@@ -222,14 +240,69 @@ function goToTop(){
 function sortByCardThenClient(){
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sheet = ss.getSheetByName(targetSheet);
-  
   var data = sheet.getDataRange().getValues();
   
-  var range = sheet.getRange("A4:C500");
+  var rows = sheet.getDataRange();
+  var numRows = rows.getNumRows() + 10;
+  
+  var range = sheet.getRange("A4:I"+numRows);
   range.sort([{column: theCardColumn+1, ascending: true}, {column: theClientColumn+1, ascending: true}]);
 }
 
 function sortByCard(){
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName(targetSheet);
+  //var sheet = ss.getSheetByName("Sheet1");
+  var data = sheet.getDataRange().getValues();
+  
+  var rows = sheet.getDataRange();
+  var numRows = rows.getNumRows() + 10;
+  
+  var range = sheet.getRange("A4:I"+numRows);
+  //Browser.msgBox('under development', 'the range is A4:C'+numRows, Browser.Buttons.OK);
+  range.sort(5);
+}
+
+function sortByClient(){
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName(targetSheet);
+  //var sheet = ss.getSheetByName("Sheet1");
+  var data = sheet.getDataRange().getValues();
+  
+  var rows = sheet.getDataRange();
+  var numRows = rows.getNumRows() + 10;
+  
+  var range = sheet.getRange("A4:I"+numRows);
+  range.sort(theClientColumn+1);
+}
+
+function sortByClientThenDate(){
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName(targetSheet);
+  //var sheet = ss.getSheetByName("Sheet1");
+  var data = sheet.getDataRange().getValues();
+  
+  var rows = sheet.getDataRange();
+  var numRows = rows.getNumRows() + 10;
+  
+  var range = sheet.getRange("A4:I"+numRows);
+  range.sort([{column: 6, ascending: true}, {column: 3, ascending: true}]);
+}
+
+function sortBySelectedThenByClientThenByDate(){
+   var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName(targetSheet);
+  //var sheet = ss.getSheetByName("Sheet1");
+  var data = sheet.getDataRange().getValues();
+  
+  var rows = sheet.getDataRange();
+  var numRows = rows.getNumRows() + 10;
+  
+  var range = sheet.getRange("A4:I"+numRows);
+  range.sort([{column: 9, ascending: true}, {column: 6, ascending: true}, {column: 3, ascending: true}]);
+}
+
+function sortBySelected(){
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sheet = ss.getSheetByName(targetSheet);
   var data = sheet.getDataRange().getValues();
@@ -237,24 +310,7 @@ function sortByCard(){
   var rows = sheet.getDataRange();
   var numRows = rows.getNumRows() + 10;
   
-  var range = sheet.getRange("A4:C"+numRows);
-  Browser.msgBox('under development', 'the range is A4:C'+numRows, Browser.Buttons.OK);
-  //range.sort(theCardColumn+1);
-}
-
-function sortByClient(){
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = ss.getSheetByName(targetSheet);
-  var data = sheet.getDataRange().getValues();
-  var range = sheet.getRange("A4:C500");
-  range.sort(theClientColumn+1);
-}
-
-function sortBySelected(){
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = ss.getSheetByName(targetSheet);
-  var data = sheet.getDataRange().getValues();
-  var range = sheet.getRange("A4:C500");
+  var range = sheet.getRange("A4:I"+numRows);
   range.sort(theSelectedColumn+1);
 }
 
@@ -305,6 +361,31 @@ function clearFirstSheet() {
     }
   }
 }
+
+
+function populateClientNumbers(){
+  //firstSheet.getRange("N2").setFormula("=UNIQUE(A2:A)");
+  
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName(targetSheet);
+  var data = sheet.getDataRange().getValues();
+  
+  var rows = sheet.getDataRange();
+  var numRows = rows.getNumRows();
+  
+  /*
+  for (var i=4;i<numRows;i++){
+    sheet.getRange("H"+i).setFormula("=VLOOKUP(clientCol,client_sheet!A2:B,2,0)");
+  }
+  */
+  //var range = sheet.getRange("A4:I"+numRows);
+  
+  sheet.getRange("H4:H"+numRows).setFormula("=VLOOKUP(clientCol,client_sheet!$A$2:$B,2,0)");
+  
+  
+}
+
+
 
 
 /*
